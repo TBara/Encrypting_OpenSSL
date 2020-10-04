@@ -45,6 +45,7 @@ namespace EncryptingWithOpenSSL
 
             using (Aes aesAlg = Aes.Create())
             {
+                // Set AES properties
                 aesAlg.Mode = CipherMode.CBC;
                 aesAlg.BlockSize = 128;
                 aesAlg.Key = FormKey_128(key);
@@ -81,7 +82,7 @@ namespace EncryptingWithOpenSSL
 
             for (int i = word.Length; i < len; i++)
             {
-                key[i] = 0x20;
+                key[i] = 0x20; // Fill the rest of the array with space chars
             }
 
             return key;
@@ -95,11 +96,12 @@ namespace EncryptingWithOpenSSL
 
             for (int i = 0; i < len; i++)
             {
-                iv[i] = 0x0000;
+                iv[i] = 0x0000; // Fill the array with all hex zeros
             }
             return iv;
         }
 
+        // Create a hex string 
         static string BytesToStr(byte[] bytes_arr)
         {
             return BitConverter.ToString(bytes_arr).Replace("-", "");
