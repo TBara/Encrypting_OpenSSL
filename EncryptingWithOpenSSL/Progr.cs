@@ -13,9 +13,6 @@ namespace EncryptingWithOpenSSL
         static void Main(string[] args)
         {
             const string top_secret = "This is a top secret.";
-            //var top_sec_len = top_secret.Length;
-            //string cipher_txt = Encrypt(top_secret, "shrubbery");
-
             const string cipher_txt_raw = "8d20e5056a8d24d0462ce74e4904c1b513e10d1df4a2ef2ad4540fae1ca0aaf9";
             string cipher_txt = cipher_txt_raw.ToUpper();
 
@@ -32,7 +29,8 @@ namespace EncryptingWithOpenSSL
                 string byte_string = Encrypt(top_secret ,word_list[i]);
                 if (byte_string == cipher_txt)
                 {
-                    Console.WriteLine("The key is: {0}", word_list[i]);
+                    string decoded = Decrypt(byte_string, word_list[i]);
+                    Console.WriteLine("'{1}' was encrypted with key: {0}", word_list[i], decoded);
                 }
             }
         }
@@ -69,6 +67,48 @@ namespace EncryptingWithOpenSSL
                 byte_string = BytesToStr(encrypted);
             }
             return byte_string;
+        }
+
+        // Decrypt ciphertext with a provided key
+        static string Decrypt(string cipher_text, string key)
+        {
+
+            byte[] cipher_bytes = StrToBytes(cipher_text);
+            string plaintext = null;
+            using (Aes aesAlg = Aes.Create())
+            {
+                aesAlg.Key = FormKey_128(key);
+                aesAlg.IV = FormIV_128();
+
+                // Create a decryptor to perform the stream transform.
+                ICryptoTransform decryptor = aesAlg.CreateDecryptor(aesAlg.Key, aesAlg.IV);
+
+                // Create the streams used for decryption.
+                using (MemoryStream msDecrypt = new MemoryStream(cipher_bytes))
+                {
+                    using (CryptoStream csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read))
+                    {
+                        using (StreamReader srDecrypt = new StreamReader(csDecrypt))
+                        {
+
+                            // Read the decrypted bytes from the decrypting stream
+                            // and place them in a string.
+                            plaintext = srDecrypt.ReadToEnd();
+                        }
+                    }
+                }
+            }
+            return plaintext;
+        }
+
+        // Convert a string of hex numbers to array of bytes
+        static byte[] StrToBytes(String byte_str)
+        {
+            int len = byte_str.Length;
+            byte[] bytes = new byte[len / 2];
+            for (int i = 0; i < len; i += 2)
+                bytes[i / 2] = Convert.ToByte(byte_str.Substring(i, 2), 16);
+            return bytes;
         }
 
         // Form 128-bit key from provided string, pad with zero
